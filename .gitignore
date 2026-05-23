@@ -1,0 +1,16 @@
+# Database credentials
+.env
+hospitalapi/.env
+
+# Java compiled files
+*.class
+*.jar
+
+# VS Code
+.vscode/
+
+# Maven
+hospitalapi/target/
+
+# Spring Boot
+hospitalapi/src/main/resources/application.properties
