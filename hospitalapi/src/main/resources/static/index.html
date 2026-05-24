@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hospital Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --p0: #2a0030;
+    --p1: #74057a;
+    --p2: #b10ac1;
+    --p3: #d966e8;
+    --p4: #f0c0f5;
+    --accent: #22de09;
+    --accent2: #ff4d6d;
+    --bg: #0d000f;
+    --surface: #160018;
+    --card: #1e0022;
+    --border: rgba(177,10,193,0.25);
+    --text: #f5e6f7;
+    --muted: #9d7fa3;
+    --radius: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background mesh ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 20%, rgba(116,5,122,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 90% 80%, rgba(177,10,193,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(34,222,9,0.04) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .shell { position: relative; z-index: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: linear-gradient(160deg, #1e0022 0%, #2a0030 100%);
+    border-right: 1px solid var(--border);
+    padding: 32px 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: sticky; top: 0; height: 100vh;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px; font-weight: 800;
+    color: var(--p3);
+    letter-spacing: -0.5px;
+    padding: 0 12px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .brand span { color: var(--accent); }
+
+  .nav-btn {
+    background: transparent;
+    border: none; border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .nav-btn:hover { background: rgba(177,10,193,0.12); color: var(--p3); }
+  .nav-btn.active { background: rgba(177,10,193,0.2); color: white; border-left: 3px solid var(--p2); }
+  .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .stat-cards { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+  .stat-card {
+    background: rgba(116,5,122,0.15);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .value { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--p3); }
+
+  /* ── Main ── */
+  .main { padding: 36px 40px; display: flex; flex-direction: column; gap: 28px; }
+
+  .page { display: none; flex-direction: column; gap: 24px; }
+  .page.active { display: flex; }
+
+  /* ── Page header ── */
+  .page-header { display: flex; align-items: center; justify-content: space-between; }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(135deg, #f0c0f5, #b10ac1);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* ── Search bar ── */
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 320px; padding: 10px 16px 10px 40px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; transition: border 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--p2); }
+  .search-wrap::before { content: '🔍'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead tr { background: rgba(116,5,122,0.3); }
+  thead th {
+    padding: 13px 16px; text-align: left;
+    font-family: 'Syne', sans-serif; font-size: 11px;
+    font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--p3);
+  }
+  tbody tr { border-top: 1px solid rgba(177,10,193,0.1); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(177,10,193,0.07); }
+  tbody td { padding: 12px 16px; color: var(--text); vertical-align: middle; }
+
+  .id-badge {
+    background: rgba(116,5,122,0.25); border: 1px solid var(--border);
+    color: var(--p3); font-family: 'Syne', sans-serif;
+    font-size: 12px; padding: 3px 8px; border-radius: 6px;
+  }
+
+  .status-pill {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .status-Inpatient    { background: rgba(255,77,109,0.15); color: #ff6b85; border: 1px solid rgba(255,77,109,0.3); }
+  .status-Outpatient   { background: rgba(34,222,9,0.12);  color: #5ef047; border: 1px solid rgba(34,222,9,0.3); }
+  .status-Observation  { background: rgba(255,193,7,0.12); color: #ffd54f; border: 1px solid rgba(255,193,7,0.3); }
+  .status-Ambulatory   { background: rgba(100,149,237,0.15); color: #90b4f5; border: 1px solid rgba(100,149,237,0.3); }
+
+  .action-btns { display: flex; gap: 6px; }
+  .btn-edit, .btn-del {
+    border: none; border-radius: 6px; padding: 5px 12px;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-edit { background: rgba(116,5,122,0.35); color: var(--p3); border: 1px solid var(--border); }
+  .btn-edit:hover { background: rgba(116,5,122,0.55); }
+  .btn-del  { background: rgba(255,77,109,0.15); color: #ff6b85; border: 1px solid rgba(255,77,109,0.3); }
+  .btn-del:hover  { background: rgba(255,77,109,0.3); }
+
+  .empty-row td { text-align: center; color: var(--muted); padding: 40px; font-size: 14px; }
+
+  /* ── Form card ── */
+  .form-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    max-width: 600px;
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    font-size: 12px; font-weight: 500;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; transition: border 0.2s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--p2); }
+  .form-group select option { background: var(--card); }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    border: none; border-radius: 9px; padding: 12px 28px;
+    color: white; font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 9px; padding: 11px 20px;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--p2); color: var(--p3); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px;
+    font-size: 14px; color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999; max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: rgba(34,222,9,0.4); }
+  #toast.error   { border-color: rgba(255,77,109,0.4); }
+
+  /* ── Modal ── */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 32px;
+    width: 520px; max-width: 95vw;
+    animation: popIn 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-title {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+    color: var(--p3); margin-bottom: 24px;
+  }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--p1); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="brand">HMS<br/><span>Portal</span></div>
+
+    <button class="nav-btn active" onclick="showPage('patients')">
+      <span class="icon">🏥</span> All Patients
+    </button>
+    <button class="nav-btn" onclick="showPage('register')">
+      <span class="icon">➕</span> Register Patient
+    </button>
+
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="label">Total Patients</div>
+        <div class="value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Inpatient</div>
+        <div class="value" id="stat-inpatient">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Outpatient</div>
+        <div class="value" id="stat-outpatient">—</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- ── Patients Page ── -->
+    <section class="page active" id="page-patients">
+      <div class="page-header">
+        <h1 class="page-title">Patient Records</h1>
+        <div class="search-wrap">
+          <input type="text" id="searchInput" placeholder="Search anything..." oninput="filterTable()"/>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Age</th>
+              <th>Doctor</th><th>Hospital</th>
+              <th>Status</th><th>Condition</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patientTableBody">
+            <tr class="empty-row"><td colspan="8">Loading patients...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Register Page ── -->
+    <section class="page" id="page-register">
+      <div class="page-header">
+        <h1 class="page-title">Register Patient</h1>
+      </div>
+
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Patient ID</label>
+            <input type="number" id="reg-id" placeholder="e.g. 101"/>
+          </div>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="reg-name" placeholder="e.g. Toph Beifong"/>
+          </div>
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" id="reg-age" placeholder="e.g. 28"/>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="reg-status">
+              <option>Outpatient</option>
+              <option>Inpatient</option>
+              <option>Observation</option>
+              <option>Ambulatory</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Doctor</label>
+            <input type="text" id="reg-doctor" placeholder="e.g. Dr. Katara"/>
+          </div>
+          <div class="form-group">
+            <label>Hospital</label>
+            <input type="text" id="reg-hospital" placeholder="e.g. City General"/>
+          </div>
+          <div class="form-group full">
+            <label>Condition</label>
+            <input type="text" id="reg-condition" placeholder="e.g. Fractured tibia"/>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:24px;">
+          <button class="btn-primary" onclick="registerPatient()">Register Patient</button>
+          <button class="btn-ghost" onclick="clearRegForm()">Clear</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Edit Modal ── -->
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Patient</div>
+    <input type="hidden" id="edit-id"/>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="edit-name"/>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="edit-age"/>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-status">
+          <option>Outpatient</option>
+          <option>Inpatient</option>
+          <option>Observation</option>
+          <option>Ambulatory</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Doctor</label>
+        <input type="text" id="edit-doctor"/>
+      </div>
+      <div class="form-group full">
+        <label>Hospital</label>
+        <input type="text" id="edit-hospital"/>
+      </div>
+      <div class="form-group full">
+        <label>Condition</label>
+        <input type="text" id="edit-condition"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeEdit()">Cancel</button>
+      <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8080/api/patients';
+  let allPatients = [];
+
+  // ── Navigation ──────────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'patients') loadPatients();
+  }
+
+  // ── Toast ────────────────────────────────────────────────
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+    t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3000);
+  }
+
+  // ── Load patients ────────────────────────────────────────
+  async function loadPatients() {
+    try {
+      const res = await fetch(API);
+      allPatients = await res.json();
+      renderTable(allPatients);
+      loadStats();
+    } catch (err) {
+      document.getElementById('patientTableBody').innerHTML =
+        `<tr class="empty-row"><td colspan="8">❌ Cannot reach Spring Boot — is it running on port 8080?</td></tr>`;
+    }
+  }
+
+  // ── Load stats ───────────────────────────────────────────
+  async function loadStats() {
+    try {
+      const res = await fetch(API + '/stats');
+      const s = await res.json();
+      document.getElementById('stat-total').textContent     = s.total     ?? '—';
+      document.getElementById('stat-inpatient').textContent = s.inpatient ?? '—';
+      document.getElementById('stat-outpatient').textContent= s.outpatient?? '—';
+    } catch {}
+  }
+
+  // ── Render table ─────────────────────────────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('patientTableBody');
+    if (!data.length) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No patients found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td><span class="id-badge">${p.patientId}</span></td>
+        <td>${p.name ?? '—'}</td>
+        <td>${p.age}</td>
+        <td>${p.doctor ?? '—'}</td>
+        <td>${p.hospital ?? '—'}</td>
+        <td><span class="status-pill status-${p.status ?? 'Outpatient'}">${p.status ?? 'Outpatient'}</span></td>
+        <td>${p.conditionDesc ?? '—'}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-edit" onclick='openEdit(${JSON.stringify(p)})'>Edit</button>
+            <button class="btn-del"  onclick="deletePatient(${p.patientId}, '${p.name}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ── Search / filter ──────────────────────────────────────
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    if (!q) { renderTable(allPatients); return; }
+    const filtered = allPatients.filter(p =>
+      [p.name, p.doctor, p.hospital, p.status, p.conditionDesc,
+       String(p.age), String(p.patientId)]
+      .some(v => v && v.toLowerCase().includes(q))
+    );
+    renderTable(filtered);
+  }
+
+  // ── Register ─────────────────────────────────────────────
+  async function registerPatient() {
+    const id       = document.getElementById('reg-id').value.trim();
+    const name     = document.getElementById('reg-name').value.trim();
+    const age      = document.getElementById('reg-age').value.trim();
+    const doctor   = document.getElementById('reg-doctor').value.trim() || 'Not Assigned';
+    const hospital = document.getElementById('reg-hospital').value.trim() || 'General Hospital';
+    const status   = document.getElementById('reg-status').value;
+    const cond     = document.getElementById('reg-condition').value.trim() || 'Not specified';
+
+    if (!id || !name || !age) { toast('Please fill ID, Name and Age', 'error'); return; }
+
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: parseInt(id), name, age: parseInt(age),
+          doctor, hospital, status, conditionDesc: cond
+        })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast('Patient registered successfully!');
+      clearRegForm();
+      loadStats();
+    } catch (err) {
+      toast('Failed: ' + err.message, 'error');
+    }
+  }
+
+  function clearRegForm() {
+    ['reg-id','reg-name','reg-age','reg-doctor','reg-hospital','reg-condition']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('reg-status').value = 'Outpatient';
+  }
+
+  // ── Edit modal ───────────────────────────────────────────
+  function openEdit(p) {
+    document.getElementById('edit-id').value        = p.patientId;
+    document.getElementById('edit-name').value      = p.name ?? '';
+    document.getElementById('edit-age').value       = p.age;
+    document.getElementById('edit-doctor').value    = p.doctor ?? '';
+    document.getElementById('edit-hospital').value  = p.hospital ?? '';
+    document.getElementById('edit-status').value    = p.status ?? 'Outpatient';
+    document.getElementById('edit-condition').value = p.conditionDesc ?? '';
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function closeEdit() {
+    document.getElementById('editModal').classList.remove('open');
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    const body = {
+      patientId:     parseInt(id),
+      name:          document.getElementById('edit-name').value,
+      age:           parseInt(document.getElementById('edit-age').value),
+      doctor:        document.getElementById('edit-doctor').value,
+      hospital:      document.getElementById('edit-hospital').value,
+      status:        document.getElementById('edit-status').value,
+      conditionDesc: document.getElementById('edit-condition').value,
+    };
+    try {
+      const res = await fetch(`${API}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast('Patient updated!');
+      closeEdit();
+      loadPatients();
+    } catch (err) {
+      toast('Update failed: ' + err.message, 'error');
+    }
+  }
+
+  // ── Delete ───────────────────────────────────────────────
+  async function deletePatient(id, name) {
+    if (!confirm(`Delete patient "${name}" (ID: ${id})? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(await res.text());
+      toast(`Patient ${id} deleted.`);
+      loadPatients();
+    } catch (err) {
+      toast('Delete failed: ' + err.message, 'error');
+    }
+  }
+
+  // ── Init ─────────────────────────────────────────────────
+  loadPatients();
+</script>
+</body>
+</html>
