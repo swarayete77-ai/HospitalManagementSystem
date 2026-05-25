@@ -10,9 +10,9 @@ public class DBConnection {
         try {
 
             Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/hospital_db",
-                    "root",
-                    "Aura@51%"
+                "jdbc:mysql://kodama.proxy.rlwy.net:42335/railway",
+                "root",
+                "nDoJoIDLcFJCynurqsZjLAkhbAgkOmJa"
             );
 
             System.out.println("Database Connected Successfully");
