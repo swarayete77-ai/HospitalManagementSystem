@@ -418,10 +418,22 @@
 <div id="toast"></div>
 
 <script>
+
   const API = 'https://lively-courage-production-9fcc.up.railway.app/api/patients';
+  const token = sessionStorage.getItem('token');
+  const role = sessionStorage.getItem('role');
+
+  if (!token) window.location.href = '/login.html';
+
+  function authHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+  }
+
   let allPatients = [];
 
-  // ── Navigation ──────────────────────────────────────────
   function showPage(name) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -430,7 +442,6 @@
     if (name === 'patients') loadPatients();
   }
 
-  // ── Toast ────────────────────────────────────────────────
   function toast(msg, type = 'success') {
     const t = document.getElementById('toast');
     t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
@@ -438,31 +449,28 @@
     setTimeout(() => t.className = '', 3000);
   }
 
-  // ── Load patients ────────────────────────────────────────
   async function loadPatients() {
     try {
-      const res = await fetch(API);
+      const res = await fetch(API, { headers: authHeaders() });
       allPatients = await res.json();
       renderTable(allPatients);
       loadStats();
     } catch (err) {
       document.getElementById('patientTableBody').innerHTML =
-        `<tr class="empty-row"><td colspan="8">❌ Cannot reach Spring Boot — is it running on port 8080?</td></tr>`;
+        `<tr class="empty-row"><td colspan="8">❌ Cannot reach API.</td></tr>`;
     }
   }
 
-  // ── Load stats ───────────────────────────────────────────
   async function loadStats() {
     try {
-      const res = await fetch(API + '/stats');
+      const res = await fetch(API + '/stats', { headers: authHeaders() });
       const s = await res.json();
-      document.getElementById('stat-total').textContent     = s.total     ?? '—';
-      document.getElementById('stat-inpatient').textContent = s.inpatient ?? '—';
-      document.getElementById('stat-outpatient').textContent= s.outpatient?? '—';
+      document.getElementById('stat-total').textContent      = s.total      ?? '—';
+      document.getElementById('stat-inpatient').textContent  = s.inpatient  ?? '—';
+      document.getElementById('stat-outpatient').textContent = s.outpatient ?? '—';
     } catch {}
   }
 
-  // ── Render table ─────────────────────────────────────────
   function renderTable(data) {
     const tbody = document.getElementById('patientTableBody');
     if (!data.length) {
@@ -488,7 +496,6 @@
     `).join('');
   }
 
-  // ── Search / filter ──────────────────────────────────────
   function filterTable() {
     const q = document.getElementById('searchInput').value.toLowerCase();
     if (!q) { renderTable(allPatients); return; }
@@ -500,7 +507,6 @@
     renderTable(filtered);
   }
 
-  // ── Register ─────────────────────────────────────────────
   async function registerPatient() {
     const id       = document.getElementById('reg-id').value.trim();
     const name     = document.getElementById('reg-name').value.trim();
@@ -515,7 +521,7 @@
     try {
       const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
           patientId: parseInt(id), name, age: parseInt(age),
           doctor, hospital, status, conditionDesc: cond
@@ -536,7 +542,6 @@
     document.getElementById('reg-status').value = 'Outpatient';
   }
 
-  // ── Edit modal ───────────────────────────────────────────
   function openEdit(p) {
     document.getElementById('edit-id').value        = p.patientId;
     document.getElementById('edit-name').value      = p.name ?? '';
@@ -566,7 +571,7 @@
     try {
       const res = await fetch(`${API}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error(await res.text());
@@ -578,11 +583,10 @@
     }
   }
 
-  // ── Delete ───────────────────────────────────────────────
   async function deletePatient(id, name) {
     if (!confirm(`Delete patient "${name}" (ID: ${id})? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (!res.ok) throw new Error(await res.text());
       toast(`Patient ${id} deleted.`);
       loadPatients();
@@ -591,8 +595,8 @@
     }
   }
 
-  // ── Init ─────────────────────────────────────────────────
   loadPatients();
+
 </script>
 </body>
 </html>

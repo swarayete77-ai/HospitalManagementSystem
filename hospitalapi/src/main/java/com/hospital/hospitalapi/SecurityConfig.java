@@ -23,13 +23,13 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/", "/index.html", "/login.html").permitAll()
-                .requestMatchers("/**/*.css", "/**/*.js").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/patients/**").hasAnyRole("ADMIN", "DOCTOR")
-                .requestMatchers("/api/patients/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+    .requestMatchers("/auth/login", "/auth/register").permitAll()
+    .requestMatchers("/", "/index.html", "/login.html").permitAll()
+    .requestMatchers("/**/*.css", "/**/*.js").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/patients/**").hasAnyRole("ADMIN", "DOCTOR")
+    .requestMatchers("/api/patients/**").hasRole("ADMIN")
+    .anyRequest().authenticated()
+)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
