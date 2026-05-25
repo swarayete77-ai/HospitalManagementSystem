@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+NEW INDEXXXXX
+
+		
+
+	<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -271,9 +275,9 @@
     <button class="nav-btn active" onclick="showPage('patients')">
       <span class="icon">🏥</span> All Patients
     </button>
-    <button class="nav-btn" onclick="showPage('register')">
-      <span class="icon">➕</span> Register Patient
-    </button>
+<button class="nav-btn" onclick="showPage('register')" id="btn-register">
+  <span class="icon">➕</span> Register Patient
+</button>
 
     <div class="stat-cards">
       <div class="stat-card">
@@ -425,6 +429,10 @@
 
   if (!token) window.location.href = '/login.html';
 
+  if (role === 'DOCTOR') {
+  document.getElementById('btn-register').style.display = 'none';
+}
+
   function authHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -487,11 +495,13 @@
         <td><span class="status-pill status-${p.status ?? 'Outpatient'}">${p.status ?? 'Outpatient'}</span></td>
         <td>${p.conditionDesc ?? '—'}</td>
         <td>
-          <div class="action-btns">
-            <button class="btn-edit" onclick='openEdit(${JSON.stringify(p)})'>Edit</button>
-            <button class="btn-del"  onclick="deletePatient(${p.patientId}, '${p.name}')">Delete</button>
-          </div>
-        </td>
+  <div class="action-btns">
+    ${role === 'ADMIN' ? `
+      <button class="btn-edit" onclick='openEdit(${JSON.stringify(p)})'>Edit</button>
+      <button class="btn-del"  onclick="deletePatient(${p.patientId}, '${p.name}')">Delete</button>
+    ` : '<span style="color:var(--muted);font-size:12px;">View only</span>'}
+  </div>
+</td>
       </tr>
     `).join('');
   }
