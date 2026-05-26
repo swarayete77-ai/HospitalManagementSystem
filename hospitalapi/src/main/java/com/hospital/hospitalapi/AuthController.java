@@ -21,7 +21,7 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @PostMapping("/register")
+@PostMapping("/register")
 public ResponseEntity<?> register(@RequestBody Map<String, String> body,
                                    jakarta.servlet.http.HttpServletRequest request) {
     String authHeader = request.getHeader("Authorization");
