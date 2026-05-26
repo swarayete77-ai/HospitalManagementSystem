@@ -21,35 +21,24 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
-@PostMapping("/register")
-public ResponseEntity<?> register(@RequestBody Map<String, String> body,
-                                   jakarta.servlet.http.HttpServletRequest request) {
-    String authHeader = request.getHeader("Authorization");
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        return ResponseEntity.status(403).body("Admin token required to register users");
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        String password = body.get("password");
+        String role = body.get("role").toUpperCase();
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            return ResponseEntity.badRequest().body("Username already exists");
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(Role.valueOf(role));
+
+        userRepository.save(user);
+        return ResponseEntity.ok("User registered successfully");
     }
-
-    String token = authHeader.substring(7);
-    if (!jwtUtil.isTokenValid(token) || !jwtUtil.extractRole(token).equals("ADMIN")) {
-        return ResponseEntity.status(403).body("Only admins can register new users");
-    }
-
-    String username = body.get("username");
-    String password = body.get("password");
-    String role = body.get("role").toUpperCase();
-
-    if (userRepository.findByUsername(username).isPresent()) {
-        return ResponseEntity.badRequest().body("Username already exists");
-    }
-
-    User user = new User();
-    user.setUsername(username);
-    user.setPassword(passwordEncoder.encode(password));
-    user.setRole(Role.valueOf(role));
-
-    userRepository.save(user);
-    return ResponseEntity.ok("User registered successfully");
-}
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
